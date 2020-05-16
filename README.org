@@ -1,0 +1,9 @@
+#+TITLE: sarso
+
+Sarso is not Jira.
+
+Sarso does a local sync of Jira projects to provide better and faster offline
+working support with Jira. This includes integration with Org-mode, faster find
+and create workflows etc. Sarso is not a replacement for the Jira interface but
+I realize I don't really use even 10% of that interface so why pay in time for
+the full bloat?
