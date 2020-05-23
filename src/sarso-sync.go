@@ -25,7 +25,7 @@ func initDb(dbPath string) {
 
 	stmt, err := db.Prepare(`CREATE TABLE issues (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        key TEXT,
+        key TEXT UNIQUE,
         summary TEXT NOT NULL,
         description TEXT
     )`)
@@ -41,7 +41,7 @@ func writeToDb(issues []jira.Issue, dbPath string) {
 
 	defer db.Close()
 
-	stmt, err := db.Prepare("INSERT INTO issues(key, summary, description) VALUES(?, ?, ?)")
+	stmt, err := db.Prepare("REPLACE INTO issues(key, summary, description) VALUES(?, ?, ?)")
 	cry(err)
 
 	for _, issue := range issues {
