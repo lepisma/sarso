@@ -35,6 +35,21 @@ func initDb(dbPath string) {
 	cry(err)
 }
 
+func createIssue(client *jira.Client, project *jira.Project, summary string, description string) *jira.Issue {
+	i := jira.Issue{
+		Fields: &jira.IssueFields{
+			Description: description,
+			Project: jira.Project{
+				Key: project.Key,
+			},
+			Summary: summary,
+		},
+	}
+	issue, _, err := client.Issue.Create(&i)
+	cry(err)
+	return issue
+}
+
 func writeToDb(issues []jira.Issue, dbPath string) {
 	db, err := sql.Open("sqlite3", dbPath)
 	cry(err)
