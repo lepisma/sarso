@@ -35,13 +35,14 @@
 (require 'org)
 
 (defcustom sarso-db-path "~/.sarso.sqlite"
-  "Path to sarso sqlite database")
+  "Path to sarso sqlite database.")
 
 (defcustom sarso-jira-root nil
-  "Root url for Jira.")
+  "Root url for Jira. This looks something like this
+https://company-name.atlassian.net")
 
 (defun sarso-read-issues ()
-  "Return a list of issues from database"
+  "Return a list of issues from database."
   (let ((db (emacsql-sqlite sarso-db-path)))
     (emacsql db [:select [key summary] :from issues])))
 
