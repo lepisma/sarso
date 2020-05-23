@@ -7,10 +7,22 @@ workflows. This includes integration with Org-mode, faster find and create
 methods etc. Sarso is not a replacement for the Jira interface but covers what I
 need to do on regular basis, faster.
 
+** Installation
+There are two programs here:
++ A CLI executable, =sarso-sync= for syncing issues to an sqlite database.
++ An Emacs package (WIP) for working with the database.
+
+** Usage
 Here is a workflow for v1 which is a little like maildir sync:
 
-+ Run sarso-sync and collect tickets from JIRA in an sqlite db. For now, it will
++ Run =sarso-sync= and collect tickets from Jira in an sqlite db. For now, it is
   be a full sync and only for a single project.
+
+  #+begin_src shell
+  ./sarso-sync --file sarso.sqlite --project MAC
+  #+end_src
+
 + Work with the database in Emacs/Org Mode.
-+ Add tickets to-sync in database from within Emacs and run sarso-sync to get
-  the tickets up on JIRA.
+
++ Add tickets to-sync in database from within Emacs and run =sarso-sync= again to
+  get the tickets up on Jira.
