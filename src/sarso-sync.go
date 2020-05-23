@@ -1,37 +1,59 @@
 package main
 
 import (
-	"encoding/json"
+	"database/sql"
 	"fmt"
 	"github.com/cheggaaa/pb/v3"
 	"github.com/jessevdk/go-flags"
+	_ "github.com/mattn/go-sqlite3"
 	jira "gopkg.in/andygrunwald/go-jira.v1"
-	"io/ioutil"
 	"os"
 )
 
+func cry(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 func initDb(dbPath string) {
 	fmt.Println(":: Initializing database")
+	db, err := sql.Open("sqlite3", dbPath)
+	cry(err)
+
+	defer db.Close()
+
+	stmt, err := db.Prepare(`CREATE TABLE issues (
+        key TEXT PRIMARY KEY,
+        summary TEXT,
+        description TEXT
+    )`)
+	cry(err)
+
+	_, err = stmt.Exec()
+	cry(err)
+}
+
+func writeToDb(issues []jira.Issue, dbPath string) {
+	db, err := sql.Open("sqlite3", dbPath)
+	cry(err)
+
+	defer db.Close()
+
+	stmt, err := db.Prepare("INSERT INTO issues(key, summary, description) VALUES(?, ?, ?)")
+	cry(err)
+
+	for _, issue := range issues {
+		_, err = stmt.Exec(issue.Key, issue.Fields.Summary, issue.Fields.Description)
+		cry(err)
+	}
 }
 
 func countIssues(client *jira.Client, project *jira.Project) int {
 	_, resp, err := client.Issue.Search("project="+project.Key, &jira.SearchOptions{MaxResults: 0})
-	if err != nil {
-		panic(err)
-	}
+	cry(err)
 
 	return resp.Total
-}
-
-func writeToDb(issues []jira.Issue, dbPath string) {
-	outputB, err := json.Marshal(issues)
-	if err != nil {
-		panic(err)
-	}
-	err = ioutil.WriteFile(dbPath, outputB, 0644)
-	if err != nil {
-		panic(err)
-	}
 }
 
 var opts struct {
@@ -41,9 +63,7 @@ var opts struct {
 
 func main() {
 	_, err := flags.Parse(&opts)
-	if err != nil {
-		panic(err)
-	}
+	cry(err)
 
 	base := os.Getenv("JIRA_BASE")
 	username := os.Getenv("JIRA_USER")
@@ -55,18 +75,14 @@ func main() {
 	}
 
 	client, err := jira.NewClient(tp.Client(), base)
-	if err != nil {
-		panic(err)
-	}
+	cry(err)
 
 	if _, err := os.Stat(opts.DbPath); os.IsNotExist(err) {
 		initDb(opts.DbPath)
 	}
 
 	project, _, err := client.Project.Get(opts.ProjectName)
-	if err != nil {
-		panic(err)
-	}
+	cry(err)
 
 	totalIssues := countIssues(client, project)
 	fmt.Printf(":: Found total %d issues in project %s\n", totalIssues, project.Key)
@@ -80,9 +96,7 @@ func main() {
 	}
 
 	err = client.Issue.SearchPages("project="+project.Key, nil, appendFunc)
-	if err != nil {
-		panic(err)
-	}
+	cry(err)
 
 	bar.Finish()
 
