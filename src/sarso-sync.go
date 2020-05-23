@@ -24,8 +24,9 @@ func initDb(dbPath string) {
 	defer db.Close()
 
 	stmt, err := db.Prepare(`CREATE TABLE issues (
-        key TEXT PRIMARY KEY,
-        summary TEXT,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        key TEXT,
+        summary TEXT NOT NULL,
         description TEXT
     )`)
 	cry(err)
