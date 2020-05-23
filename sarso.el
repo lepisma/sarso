@@ -4,7 +4,7 @@
 
 ;; Author: Abhinav Tushar <abhinav@lepisma.xyz>
 ;; Version: 0.0.1
-;; Package-Requires: ((emacs "26"))
+;; Package-Requires: ((emacs "26") (helm "3.6.2") (emacsql "3.0.0") (emacsql-sqlite "3.0.0"))
 ;; URL: https://github.com/lepisma/sarso
 
 ;;; Commentary:
