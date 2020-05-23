@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/cheggaaa/pb/v3"
-	"github.com/jessevdk/go-flags"
+	"github.com/docopt/docopt-go"
 	_ "github.com/mattn/go-sqlite3"
 	jira "gopkg.in/andygrunwald/go-jira.v1"
 	"os"
@@ -114,14 +114,25 @@ func countIssues(client *jira.Client, project *jira.Project) int {
 	return resp.Total
 }
 
-var opts struct {
-	DbPath      string `short:"f" long:"file" description:"Database file" value-name:"FILE" required:"true"`
-	ProjectName string `short:"p" long:"project" description:"Name of the project to sync" required:"true"`
-}
-
 func main() {
-	_, err := flags.Parse(&opts)
-	cry(err)
+	usage := `sarso
+
+Usage:
+  sarso sync --db-path=<db-path> --project-key=<project-key>
+  sarso -h | --help
+  sarso --version
+
+Options:
+  -h --help                     Show this screen.
+  --version                     Show version.
+  --db-path=<db-path>           Database file path.
+  --project-key=<project-key>   Project key from Jira.
+`
+
+	arguments, _ := docopt.ParseArgs(usage, os.Args[1:], "0.1.0")
+
+	dbPath, _ := arguments["--db-path"].(string)
+	projectKey, _ := arguments["--project-key"].(string)
 
 	base := os.Getenv("JIRA_BASE")
 	username := os.Getenv("JIRA_USER")
@@ -135,14 +146,14 @@ func main() {
 	client, err := jira.NewClient(tp.Client(), base)
 	cry(err)
 
-	if _, err := os.Stat(opts.DbPath); os.IsNotExist(err) {
-		initDb(opts.DbPath)
+	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
+		initDb(dbPath)
 	}
 
-	project, _, err := client.Project.Get(opts.ProjectName)
+	project, _, err := client.Project.Get(projectKey)
 	cry(err)
 
-	pushIssues(opts.DbPath, client, project)
+	pushIssues(dbPath, client, project)
 
 	totalIssues := countIssues(client, project)
 	fmt.Printf(":: Found total %d issues in project %s\n", totalIssues, project.Key)
@@ -160,5 +171,5 @@ func main() {
 
 	bar.Finish()
 
-	writeToDb(issues, opts.DbPath)
+	writeToDb(issues, dbPath)
 }

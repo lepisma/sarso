@@ -1,7 +1,11 @@
-all: ./build/sarso-sync
+all: ./build/sarso
 
-install: ./build/sarso-sync
-	install -m +x ./build/sarso-sync /usr/local/bin
+.PHONY: clean
+clean:
+	rm ./build/sarso
 
-./build/sarso-sync: ./src/sarso-sync.go
-	go build -o ./build/sarso-sync ./src/sarso-sync.go
+install: ./build/sarso
+	install -m +x ./build/sarso /usr/local/bin
+
+./build/sarso: ./src/sarso.go
+	go build -o ./build/sarso ./src/sarso.go
