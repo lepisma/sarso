@@ -9,8 +9,8 @@ need to do on regular basis, faster.
 
 ** Installation
 There are two programs here:
-+ A CLI executable, =sarso-sync= for syncing issues to an sqlite database.
-+ An Emacs package (WIP) for working with the database.
++ A CLI executable, =sarso= for syncing issues to an sqlite database.
++ An Emacs package for working with the database.
 
 For syncing you need to setup few environment variables for Jira. Here is a
 slice from .envrc file.
@@ -22,10 +22,8 @@ slice from .envrc file.
 ** Usage
 Here is a workflow for v1 which is a little like maildir sync:
 
-+ Run =sarso-sync= and collect tickets from Jira in an sqlite db. For now, it does
-  full sync for a single project. =./sarso-sync --file sarso.sqlite --project MAC=
-
++ Run =sarso= and collect tickets from Jira in an sqlite db. For now, it does full
+  sync for a single project. =sarso sync --file db.sqlite --project MAC=
 + Work with the database in Emacs/Org Mode.
-
-+ Add tickets to-sync in database from within Emacs and run =sarso-sync= again to
-  get the tickets up on Jira.
++ Add tickets to-sync in database from within Emacs and run =sarso= again to get
+  the tickets up on Jira.
