@@ -42,12 +42,54 @@ func createIssue(client *jira.Client, project *jira.Project, summary string, des
 			Project: jira.Project{
 				Key: project.Key,
 			},
+			Type: jira.IssueType{
+				Name: "Task",
+			},
 			Summary: summary,
 		},
 	}
 	issue, _, err := client.Issue.Create(&i)
 	cry(err)
 	return issue
+}
+
+func pushIssues(dbPath string, client *jira.Client, project *jira.Project) {
+	db, err := sql.Open("sqlite3", dbPath)
+	cry(err)
+
+	defer db.Close()
+
+	rows, err := db.Query("SELECT id, summary, description FROM issues WHERE key IS NULL")
+	cry(err)
+
+	var id int
+	var summary string
+	var description string
+
+	var ids []int
+	var issues []*jira.Issue
+
+	for rows.Next() {
+		err = rows.Scan(&id, &summary, &description)
+		cry(err)
+
+		issues = append(issues, createIssue(client, project, summary, description))
+		ids = append(ids, id)
+	}
+	rows.Close()
+
+	if len(issues) > 0 {
+		fmt.Printf(":: Creating %d new issue(s)\n", len(issues))
+
+		updateStmt, err := db.Prepare("UPDATE issues SET key = ? WHERE id = ?")
+		cry(err)
+
+		for i, issue := range issues {
+			_, err = updateStmt.Exec(issue.Key, ids[i])
+			cry(err)
+		}
+	}
+
 }
 
 func writeToDb(issues []jira.Issue, dbPath string) {
@@ -99,6 +141,8 @@ func main() {
 
 	project, _, err := client.Project.Get(opts.ProjectName)
 	cry(err)
+
+	pushIssues(opts.DbPath, client, project)
 
 	totalIssues := countIssues(client, project)
 	fmt.Printf(":: Found total %d issues in project %s\n", totalIssues, project.Key)
