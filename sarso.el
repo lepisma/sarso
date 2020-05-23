@@ -29,6 +29,42 @@
 
 ;;; Code:
 
+(require 'emacsql)
+(require 'emacsql-sqlite)
+(require 'helm)
+(require 'org)
+
+(defcustom sarso-db-path "~/.sarso.sqlite"
+  "Path to sarso sqlite database")
+
+(defcustom sarso-jira-root nil
+  "Root url for Jira.")
+
+(defun sarso-read-issues ()
+  "Return a list of issues from database"
+  (let ((db (emacsql-sqlite sarso-db-path)))
+    (emacsql db [:select [key summary] :from issues])))
+
+(defun sarso-format-issue (i)
+  "Format issue I for helm display and completion."
+  (format "%s: %s" (car i) (cdr i)))
+
+(defun sarso-insert-issue-link (i)
+  "Insert org mode style link for given issue I."
+  (let* ((key (symbol-name (car i)))
+         (url (concat (file-name-as-directory sarso-jira-root) "browse/" key)))
+    (org-insert-link nil url key)))
+
+;;;###autoload
+(defun sarso-insert-link ()
+  "Prompt for summary search and insert links in org mode style."
+  (interactive)
+  (let ((issues (sarso-read-issues)))
+    (helm :sources (helm-build-sync-source "sarso issues"
+                     :candidates (mapcar (lambda (i) (cons (sarso-format-issue i) i)) issues)
+                     :action #'sarso-insert-issue-link)
+          :buffer "*helm sarso insert link*")))
+
 (provide 'sarso)
 
 ;;; sarso.el ends here
