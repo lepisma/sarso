@@ -12,6 +12,13 @@ There are two programs here:
 + A CLI executable, =sarso-sync= for syncing issues to an sqlite database.
 + An Emacs package (WIP) for working with the database.
 
+For syncing you need to setup few environment variables for Jira. Here is a
+slice from .envrc file.
+
+: export JIRA_BASE="https://company.atlassian.net"
+: export JIRA_USER="username"
+: export JIRA_TOKEN="token/pass"
+
 ** Usage
 Here is a workflow for v1 which is a little like maildir sync:
 
