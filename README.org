@@ -15,12 +15,8 @@ There are two programs here:
 ** Usage
 Here is a workflow for v1 which is a little like maildir sync:
 
-+ Run =sarso-sync= and collect tickets from Jira in an sqlite db. For now, it is
-  be a full sync and only for a single project.
-
-  #+begin_src shell
-  ./sarso-sync --file sarso.sqlite --project MAC
-  #+end_src
++ Run =sarso-sync= and collect tickets from Jira in an sqlite db. For now, it does
+  full sync for a single project. =./sarso-sync --file sarso.sqlite --project MAC=
 
 + Work with the database in Emacs/Org Mode.
 
