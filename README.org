@@ -6,3 +6,11 @@ Sarso does a local sync of Jira projects to provide better and faster offline
 workflows. This includes integration with Org-mode, faster find and create
 methods etc. Sarso is not a replacement for the Jira interface but covers what I
 need to do on regular basis, faster.
+
+Here is a workflow for v1 which is a little like maildir sync:
+
++ Run sarso-sync and collect tickets from JIRA in an sqlite db. For now, it will
+  be a full sync and only for a single project.
++ Work with the database in Emacs/Org Mode.
++ Add tickets to-sync in database from within Emacs and run sarso-sync to get
+  the tickets up on JIRA.
