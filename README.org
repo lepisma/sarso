@@ -1,5 +1,7 @@
 #+TITLE: sarso
 
+[[tag][file:https://img.shields.io/github/v/tag/lepisma/sarso.svg]]
+
 Sarso is not Jira.
 
 Sarso does a local sync of Jira projects to provide better and faster offline
