@@ -32,6 +32,16 @@ func initDb(dbPath string) {
 	cry(err)
 }
 
+func purgeDb(dbPath string) {
+	db, err := sql.Open("sqlite3", dbPath)
+	cry(err)
+
+	defer db.Close()
+
+	_, err := db.Exec(`DELETE FROM issues`)
+	cry(err)
+}
+
 func createIssue(client *jira.Client, project *jira.Project, summary string, description string) *jira.Issue {
 	i := jira.Issue{
 		Fields: &jira.IssueFields{
@@ -116,6 +126,7 @@ func main() {
 
 Usage:
   sarso sync --db-path=<db-path> --project-key=<project-key>
+  sarso purge --db-path=<db-path>
   sarso -h | --help
   sarso --version
 
@@ -127,46 +138,52 @@ Options:
 `
 
 	arguments, _ := docopt.ParseArgs(usage, os.Args[1:], "0.1.0")
-
 	dbPath, _ := arguments["--db-path"].(string)
-	projectKey, _ := arguments["--project-key"].(string)
-
-	base := os.Getenv("JIRA_BASE")
-	username := os.Getenv("JIRA_USER")
-	token := os.Getenv("JIRA_TOKEN")
-
-	tp := jira.BasicAuthTransport{
-		Username: username,
-		Password: token,
-	}
-
-	client, err := jira.NewClient(tp.Client(), base)
-	cry(err)
 
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
 		initDb(dbPath)
 	}
 
-	project, _, err := client.Project.Get(projectKey)
-	cry(err)
+	if purgeArg, _ := arguments["purge"].(bool); purgeArg {
+		purgeDb(dbPath)
+		fmt.Println(":: Database purged")
+	} else if syncArg, _ := arguments["sync"].(bool); syncArg {
+		//
+		projectKey, _ := arguments["--project-key"].(string)
 
-	pushIssues(dbPath, client, project)
+		base := os.Getenv("JIRA_BASE")
+		username := os.Getenv("JIRA_USER")
+		token := os.Getenv("JIRA_TOKEN")
 
-	totalIssues := countIssues(client, project)
-	fmt.Printf(":: Found total %d issues in project %s\n", totalIssues, project.Key)
-	bar := pb.StartNew(totalIssues)
+		tp := jira.BasicAuthTransport{
+			Username: username,
+			Password: token,
+		}
 
-	var issues []jira.Issue
-	appendFunc := func(i jira.Issue) (err error) {
-		issues = append(issues, i)
-		bar.Increment()
-		return err
+		client, err := jira.NewClient(tp.Client(), base)
+		cry(err)
+
+		project, _, err := client.Project.Get(projectKey)
+		cry(err)
+
+		pushIssues(dbPath, client, project)
+
+		totalIssues := countIssues(client, project)
+		fmt.Printf(":: Found total %d issues in project %s\n", totalIssues, project.Key)
+		bar := pb.StartNew(totalIssues)
+
+		var issues []jira.Issue
+		appendFunc := func(i jira.Issue) (err error) {
+			issues = append(issues, i)
+			bar.Increment()
+			return err
+		}
+
+		err = client.Issue.SearchPages("project="+project.Key, nil, appendFunc)
+		cry(err)
+
+		bar.Finish()
+
+		writeToDb(issues, dbPath)
 	}
-
-	err = client.Issue.SearchPages("project="+project.Key, nil, appendFunc)
-	cry(err)
-
-	bar.Finish()
-
-	writeToDb(issues, dbPath)
 }
