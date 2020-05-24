@@ -38,7 +38,7 @@ func purgeDb(dbPath string) {
 
 	defer db.Close()
 
-	_, err := db.Exec(`DELETE FROM issues`)
+	_, err = db.Exec(`DELETE FROM issues`)
 	cry(err)
 }
 
