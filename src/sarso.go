@@ -125,7 +125,7 @@ func main() {
 	usage := `sarso
 
 Usage:
-  sarso sync --db-path=<db-path> --project-key=<project-key>
+  sarso sync --db-path=<db-path> --project-key=<project-key> [--push-only]
   sarso purge --db-path=<db-path>
   sarso -h | --help
   sarso --version
@@ -135,6 +135,8 @@ Options:
   --version                     Show version.
   --db-path=<db-path>           Database file path.
   --project-key=<project-key>   Project key from Jira.
+  --push-only                   Only push tickets from sarso to Jira and
+                                not the other way.
 `
 
 	arguments, _ := docopt.ParseArgs(usage, os.Args[1:], "0.1.0")
@@ -150,6 +152,7 @@ Options:
 	} else if syncArg, _ := arguments["sync"].(bool); syncArg {
 		//
 		projectKey, _ := arguments["--project-key"].(string)
+		pushOnly, _ := arguments["--push-only"].(bool)
 
 		base := os.Getenv("JIRA_BASE")
 		username := os.Getenv("JIRA_USER")
@@ -167,6 +170,9 @@ Options:
 		cry(err)
 
 		pushIssues(dbPath, client, project)
+		if pushOnly {
+			return
+		}
 
 		totalIssues := countIssues(client, project)
 		fmt.Printf(":: Found total %d issues in project %s\n", totalIssues, project.Key)
