@@ -23,15 +23,12 @@ func initDb(dbPath string) {
 
 	defer db.Close()
 
-	stmt, err := db.Prepare(`CREATE TABLE issues (
+	_, err = db.Exec(`CREATE TABLE issues (
         id INTEGER PRIMARY KEY,
         key TEXT UNIQUE,
         summary TEXT NOT NULL,
         description TEXT
     )`)
-	cry(err)
-
-	_, err = stmt.Exec()
 	cry(err)
 }
 
