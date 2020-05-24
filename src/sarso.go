@@ -139,7 +139,7 @@ Options:
                                 not the other way.
 `
 
-	arguments, _ := docopt.ParseArgs(usage, os.Args[1:], "0.1.0")
+	arguments, _ := docopt.ParseArgs(usage, os.Args[1:], "0.2.0")
 	dbPath, _ := arguments["--db-path"].(string)
 
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
