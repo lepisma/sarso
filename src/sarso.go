@@ -27,7 +27,16 @@ func initDb(dbPath string) {
         id INTEGER PRIMARY KEY,
         key TEXT UNIQUE,
         summary TEXT NOT NULL,
-        description TEXT
+        description TEXT,
+        assignee_id INTEGER,
+        FOREIGN KEY(assignee_id) REFERENCES users(id)
+    )`)
+	cry(err)
+
+	_, err = db.Exec(`CREATE TABLE users (
+        id INTEGER PRIMARY KEY,
+        email TEXT UNIQUE,
+        display_name TEXT NOT NULL
     )`)
 	cry(err)
 }
