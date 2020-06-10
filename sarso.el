@@ -29,6 +29,7 @@
 
 ;;; Code:
 
+(require 'eieio)
 (require 'emacsql)
 (require 'emacsql-sqlite)
 (require 'helm)
@@ -40,6 +41,16 @@
 (defcustom sarso-jira-root nil
   "Root url for Jira. This looks something like this
 https://company-name.atlassian.net")
+
+(defclass sarso-issue ()
+  ((summary :initarg :summary
+            :type string
+            :documentation "Title of issue")
+   (description :initarg :description
+                :initform ""
+                :type string
+                :documentation "Detailed description"))
+  "An issue in sarso database.")
 
 (defun sarso-read-issues ()
   "Return a list of issues from database."
