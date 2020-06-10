@@ -3,11 +3,12 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"os"
+
 	"github.com/cheggaaa/pb/v3"
 	"github.com/docopt/docopt-go"
 	_ "github.com/mattn/go-sqlite3"
 	jira "gopkg.in/andygrunwald/go-jira.v1"
-	"os"
 )
 
 func cry(err error) {
@@ -28,6 +29,10 @@ func initDb(dbPath string) {
         key TEXT UNIQUE,
         summary TEXT NOT NULL,
         description TEXT,
+        type TEXT,
+        status TEXT,
+        resolution TEXT,
+        epic TEXT,
         assignee_id INTEGER,
         FOREIGN KEY(assignee_id) REFERENCES users(id)
     )`)
@@ -114,11 +119,49 @@ func writeToDb(issues []jira.Issue, dbPath string) {
 
 	defer db.Close()
 
-	stmt, err := db.Prepare("REPLACE INTO issues(key, summary, description) VALUES(?, ?, ?)")
+	stmt, err := db.Prepare(`REPLACE INTO issues(
+        key,
+        summary,
+        description,
+        type,
+        status,
+        resolution,
+        epic
+        ) VALUES(?, ?, ?, ?, ?, ?, ?)
+    `)
 	cry(err)
 
+	var statusString, resolutionString, epicKey *string
+
 	for _, issue := range issues {
-		_, err = stmt.Exec(issue.Key, issue.Fields.Summary, issue.Fields.Description)
+		// TODO: Make struct
+		if issue.Fields.Status == nil {
+			statusString = nil
+		} else {
+			statusString = &issue.Fields.Status.Name
+		}
+
+		if issue.Fields.Resolution == nil {
+			resolutionString = nil
+		} else {
+			resolutionString = &issue.Fields.Resolution.Name
+		}
+
+		if issue.Fields.Epic == nil {
+			epicKey = nil
+		} else {
+			epicKey = &issue.Fields.Epic.Key
+		}
+
+		_, err = stmt.Exec(
+			issue.Key,
+			issue.Fields.Summary,
+			issue.Fields.Description,
+			issue.Fields.Type.Name,
+			statusString,
+			resolutionString,
+			epicKey,
+		)
 		cry(err)
 	}
 }
