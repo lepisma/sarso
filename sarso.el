@@ -72,7 +72,7 @@ https://company-name.atlassian.net")
   "Create and insert a new issue in the database."
   (interactive "sSummary: ")
   (let* ((issue (sarso-issue :summary summary))
-         (sql (format "INSERT INTO issues(summary) VALUES(\"%s\")" (oref issue :summary))))
+         (sql (format "INSERT INTO issues(summary, description) VALUES(\"%s\", \"\")" (oref issue :summary))))
     (call-process "sqlite3" nil t nil (expand-file-name sarso-db-path) sql)))
 
 ;;;###autoload
