@@ -1,0 +1,4 @@
+;; -*- mode: emacs-lisp -*-
+
+(("./sarso.el" . "^;; Version: \\(.*?\\)$")
+ ("./src/sarso.go" . "^const Version = \"\\(.*?\\)\"$"))

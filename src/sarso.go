@@ -11,6 +11,8 @@ import (
 	jira "gopkg.in/andygrunwald/go-jira.v1"
 )
 
+const Version = "0.2.0"
+
 func cry(err error) {
 	if err != nil {
 		panic(err)
@@ -191,7 +193,7 @@ Options:
                                 not the other way.
 `
 
-	arguments, _ := docopt.ParseArgs(usage, os.Args[1:], "0.2.0")
+	arguments, _ := docopt.ParseArgs(usage, os.Args[1:], Version)
 	dbPath, _ := arguments["--db-path"].(string)
 
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
