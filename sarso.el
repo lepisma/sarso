@@ -29,6 +29,7 @@
 
 ;;; Code:
 
+(require 'cl-lib)
 (require 'eieio)
 (require 'emacsql)
 (require 'emacsql-sqlite)
@@ -66,6 +67,13 @@ https://company-name.atlassian.net")
   (let* ((key (symbol-name (car i)))
          (url (concat (file-name-as-directory sarso-jira-root) "browse/" key)))
     (org-insert-link nil url key)))
+
+(defun sarso-new-issue (summary)
+  "Create and insert a new issue in the database."
+  (interactive "sSummary: ")
+  (let* ((issue (sarso-issue :summary summary))
+         (sql (format "INSERT INTO issues(summary) VALUES(\"%s\")" (oref issue :summary))))
+    (call-process "sqlite3" nil t nil (expand-file-name sarso-db-path) sql)))
 
 ;;;###autoload
 (defun sarso-insert-link ()
