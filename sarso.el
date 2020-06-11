@@ -31,10 +31,9 @@
 
 (require 'cl-lib)
 (require 'eieio)
-(require 'emacsql)
-(require 'emacsql-sqlite)
 (require 'helm)
 (require 'org)
+(require 's)
 
 (defcustom sarso-db-path "~/.sarso.sqlite"
   "Path to sarso sqlite database.")
@@ -53,10 +52,16 @@ https://company-name.atlassian.net")
                 :documentation "Detailed description"))
   "An issue in sarso database.")
 
+(defun sarso-db-exec (sql)
+  "Execute sql and return results."
+  (with-temp-buffer
+    (call-process "sqlite3" nil t nil (expand-file-name sarso-db-path) sql)
+    (let ((sep "|"))
+      (mapcar (lambda (line) (s-split sep line)) (s-split "\n" (s-trim (buffer-string)))))))
+
 (defun sarso-read-issues ()
   "Return a list of issues from database."
-  (let ((db (emacsql-sqlite sarso-db-path)))
-    (emacsql db [:select [key summary] :from issues])))
+  (sarso-db-exec "SELECT key, summary FROM issues"))
 
 (defun sarso-format-issue (i)
   "Format issue I for helm display and completion."
