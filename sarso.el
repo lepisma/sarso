@@ -43,13 +43,20 @@
 https://company-name.atlassian.net")
 
 (defclass sarso-issue ()
-  ((summary :initarg :summary
+  ((key :initarg :key
+        :initform nil
+        :documentation "Jira Key of the issue. This also sorta of
+        maintains the project name.")
+   (summary :initarg :summary
             :type string
             :documentation "Title of issue")
    (description :initarg :description
                 :initform ""
                 :type string
-                :documentation "Detailed description"))
+                :documentation "Detailed description")
+   (type :initarg :type
+         :type string
+         :documentation "Jira issue type."))
   "An issue in sarso database.")
 
 (defun sarso-db-exec (sql)
@@ -60,25 +67,31 @@ https://company-name.atlassian.net")
       (mapcar (lambda (line) (s-split sep line)) (s-split "\n" (s-trim (buffer-string)))))))
 
 (defun sarso-read-issues ()
-  "Return a list of issues from database."
-  (sarso-db-exec "SELECT key, summary FROM issues"))
+  "Return a list of sarso issues from database."
+  ;; NOTE: We skip reading `description' as of now which means issues from here
+  ;;       will have "" description.
+  (let ((lines (sarso-db-exec "SELECT key, summary, type FROM issues")))
+    (mapcar (lambda (line) (sarso-issue :key (nth 0 line)
+                                   :summary (nth 1 line)
+                                   :type (nth 2 line)))
+            lines)))
 
-(defun sarso-format-issue (i)
+(cl-defmethod sarso-format-issue ((i sarso-issue))
   "Format issue I for helm display and completion."
-  (format "%s: %s" (car i) (cdr i)))
+  (format "%s: %s" (oref i :key) (oref i :summary)))
 
-(defun sarso-insert-issue-link (i)
+(cl-defmethod sarso-insert-issue-link ((i sarso-issue))
   "Insert org mode style link for given issue I."
-  (let* ((key (symbol-name (car i)))
+  (let* ((key (oref i :key))
          (url (concat (file-name-as-directory sarso-jira-root) "browse/" key)))
     (org-insert-link nil url key)))
 
-(defun sarso-new-issue (summary)
+(defun sarso-new-issue (summary &optional type)
   "Create and insert a new issue in the database."
   (interactive "sSummary: ")
-  (let* ((issue (sarso-issue :summary summary))
-         (sql (format "INSERT INTO issues(summary, description) VALUES(\"%s\", \"\")" (oref issue :summary))))
-    (call-process "sqlite3" nil t nil (expand-file-name sarso-db-path) sql)))
+  (let* ((issue (sarso-issue :summary summary :type (or type "Task")))
+         (sql (format "INSERT INTO issues(summary, description, type) VALUES(\"%s\", \"\", \"%s\")" (oref issue :summary) (oref issue :type))))
+    (sarso-db-exec sql)))
 
 ;;;###autoload
 (defun sarso-insert-link ()
