@@ -58,7 +58,7 @@ func purgeDb(dbPath string) {
 	cry(err)
 }
 
-func createIssue(client *jira.Client, project *jira.Project, summary string, description string) *jira.Issue {
+func createIssue(client *jira.Client, project *jira.Project, summary string, description string, issueType string) *jira.Issue {
 	i := jira.Issue{
 		Fields: &jira.IssueFields{
 			Description: description,
@@ -66,7 +66,7 @@ func createIssue(client *jira.Client, project *jira.Project, summary string, des
 				Key: project.Key,
 			},
 			Type: jira.IssueType{
-				Name: "Task",
+				Name: issueType,
 			},
 			Summary: summary,
 		},
@@ -82,21 +82,22 @@ func pushIssues(dbPath string, client *jira.Client, project *jira.Project) {
 
 	defer db.Close()
 
-	rows, err := db.Query("SELECT id, summary, description FROM issues WHERE key IS NULL")
+	rows, err := db.Query("SELECT id, summary, description, type FROM issues WHERE key IS NULL")
 	cry(err)
 
 	var id int
 	var summary string
 	var description string
+	var issueType string
 
 	var ids []int
 	var issues []*jira.Issue
 
 	for rows.Next() {
-		err = rows.Scan(&id, &summary, &description)
+		err = rows.Scan(&id, &summary, &description, &issueType)
 		cry(err)
 
-		issues = append(issues, createIssue(client, project, summary, description))
+		issues = append(issues, createIssue(client, project, summary, description, issueType))
 		ids = append(ids, id)
 	}
 	rows.Close()

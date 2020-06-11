@@ -76,6 +76,10 @@ https://company-name.atlassian.net")
                                    :type (nth 2 line)))
             lines)))
 
+(defun sarso-read-issue-types ()
+  "Return a list of possible task types"
+  (mapcar #'car (sarso-db-exec "SELECT DISTINCT type FROM issues")))
+
 (cl-defmethod sarso-format-issue ((i sarso-issue))
   "Format issue I for helm display and completion."
   (format "%s: %s" (oref i :key) (oref i :summary)))
@@ -88,7 +92,7 @@ https://company-name.atlassian.net")
 
 (defun sarso-new-issue (summary &optional type)
   "Create and insert a new issue in the database."
-  (interactive "sSummary: ")
+  (interactive (list (read-from-minibuffer "Summary: ") (completing-read "Issue Type: " (sarso-read-issue-types) nil t)))
   (let* ((issue (sarso-issue :summary summary :type (or type "Task")))
          (sql (format "INSERT INTO issues(summary, description, type) VALUES(\"%s\", \"\", \"%s\")" (oref issue :summary) (oref issue :type))))
     (sarso-db-exec sql)))
