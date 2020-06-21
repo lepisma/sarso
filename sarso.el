@@ -4,7 +4,7 @@
 
 ;; Author: Abhinav Tushar <abhinav@lepisma.xyz>
 ;; Version: 0.3.2
-;; Package-Requires: ((emacs "26") (helm "3.6.2") (emacsql "3.0.0") (emacsql-sqlite "3.0.0"))
+;; Package-Requires: ((emacs "26") (helm "3.6.2") (emacsql "3.0.0") (emacsql-sqlite "3.0.0") (esi "0.0.5"))
 ;; URL: https://github.com/lepisma/sarso
 
 ;;; Commentary:
@@ -31,9 +31,12 @@
 
 (require 'cl-lib)
 (require 'eieio)
+(require 'esi)
+(require 'esi-search)
 (require 'helm)
 (require 'org)
 (require 's)
+(require 'seq)
 
 (defcustom sarso-db-path "~/.sarso.sqlite"
   "Path to sarso sqlite database.")
@@ -84,11 +87,13 @@ https://company-name.atlassian.net")
   "Format issue I for helm display and completion."
   (format "%s: %s" (oref i :key) (oref i :summary)))
 
+(cl-defmethod sarso-issue-link ((i sarso-issue))
+  "Return Jira url for give issue I."
+  (concat (file-name-as-directory sarso-jira-root) "browse/" (oref i :key)))
+
 (cl-defmethod sarso-insert-issue-link ((i sarso-issue))
   "Insert org mode style link for given issue I."
-  (let* ((key (oref i :key))
-         (url (concat (file-name-as-directory sarso-jira-root) "browse/" key)))
-    (org-insert-link nil url key)))
+  (org-insert-link nil (sarso-issue-link i) key))
 
 (defun sarso-new-issue (summary &optional type)
   "Create and insert a new issue in the database."
@@ -96,6 +101,20 @@ https://company-name.atlassian.net")
   (let* ((issue (sarso-issue :summary summary :type (or type "Task")))
          (sql (format "INSERT INTO issues(summary, description, type) VALUES(\"%s\", \"\", \"%s\")" (oref issue :summary) (oref issue :type))))
     (sarso-db-exec sql)))
+
+;;;###autoload
+(defun sarso-voice-search-open ()
+  "Perform a voice search and open found issues in browser."
+  (interactive)
+  (let ((candidates (mapcar (lambda (i) (cons (downcase (oref i :summary)) i)) (sarso-read-issues)))
+        (transcriptions (esi-transcribe-to-strings))
+        (max-matches 10))
+    (if (null transcriptions)
+        (message "No results from transcription.")
+      (message "Searching with %s" (car transcriptions))
+      (let ((scored-candidates (esi-search-filter (esi-search-sort (car transcriptions) candidates))))
+        (message "Found %d overall matches" (length scored-candidates))
+        (mapcar (lambda (c) (browse-url-default-browser (sarso-issue-link (cdr c)))) (seq-take scored-candidates max-matches))))))
 
 ;;;###autoload
 (defun sarso-insert-link ()
