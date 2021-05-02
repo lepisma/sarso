@@ -4,7 +4,7 @@
 
 ;; Author: Abhinav Tushar <abhinav@lepisma.xyz>
 ;; Version: 0.3.3
-;; Package-Requires: ((emacs "26") (helm "3.6.2") (emacsql "3.0.0") (emacsql-sqlite "3.0.0") (esi "0.0.5"))
+;; Package-Requires: ((emacs "26") (helm "3.6.2") (emacsql "3.0.0") (emacsql-sqlite "3.0.0"))
 ;; URL: https://github.com/lepisma/sarso
 
 ;;; Commentary:
@@ -31,8 +31,6 @@
 
 (require 'cl-lib)
 (require 'eieio)
-(require 'esi)
-(require 'esi-search)
 (require 'helm)
 (require 'org)
 (require 's)
@@ -101,20 +99,6 @@ https://company-name.atlassian.net")
   (let* ((issue (sarso-issue :summary summary :type (or type "Task")))
          (sql (format "INSERT INTO issues(summary, description, type) VALUES(\"%s\", \"\", \"%s\")" (oref issue :summary) (oref issue :type))))
     (sarso-db-exec sql)))
-
-;;;###autoload
-(defun sarso-voice-search-open ()
-  "Perform a voice search and open found issues in browser."
-  (interactive)
-  (let ((candidates (mapcar (lambda (i) (cons (downcase (oref i :summary)) i)) (sarso-read-issues)))
-        (transcriptions (esi-transcribe-to-strings))
-        (max-matches 10))
-    (if (null transcriptions)
-        (message "No results from transcription.")
-      (message "Searching with %s" (car transcriptions))
-      (let ((scored-candidates (esi-search-filter (esi-search-sort (car transcriptions) candidates))))
-        (message "Found %d overall matches" (length scored-candidates))
-        (mapcar (lambda (c) (browse-url-default-browser (sarso-issue-link (cdr c)))) (seq-take scored-candidates max-matches))))))
 
 ;;;###autoload
 (defun sarso-insert-link ()
