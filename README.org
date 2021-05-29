@@ -22,10 +22,10 @@ slice from .envrc file.
 : export JIRA_TOKEN="token/pass"
 
 ** Usage
-Here is a workflow for v1 which is a little like maildir sync:
+There are a few workflows that sarso is supposed to help in:
 
-+ Run =sarso= and collect tickets from Jira in an sqlite db. For now, it does full
-  sync for a single project. =sarso sync --file db.sqlite --project MAC=
-+ Work with the database in Emacs/Org Mode.
-+ Add tickets to-sync in database from within Emacs and run =sarso= again to get
-  the tickets up on Jira.
+*** Making new tickets from Emacs
++ ....
+
+*** Showing tickets in Org Agenda
++ ...
