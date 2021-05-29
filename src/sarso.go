@@ -42,6 +42,7 @@ func initDb(dbPath string) {
 
 	_, err = db.Exec(`CREATE TABLE users (
         id INTEGER PRIMARY KEY,
+        account_id text UNIQUE,
         email TEXT UNIQUE,
         display_name TEXT NOT NULL
     )`)
