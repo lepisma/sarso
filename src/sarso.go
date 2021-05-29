@@ -35,13 +35,12 @@ func initDb(dbPath string) {
         status TEXT,
         resolution TEXT,
         epic TEXT,
-        assignee_id INTEGER,
-        FOREIGN KEY(assignee_id) REFERENCES users(id)
+        assignee_id TEXT,
+        FOREIGN KEY(assignee_id) REFERENCES users(account_id)
     )`)
 	cry(err)
 
 	_, err = db.Exec(`CREATE TABLE users (
-        id INTEGER PRIMARY KEY,
         account_id text UNIQUE,
         email TEXT UNIQUE,
         display_name TEXT NOT NULL
@@ -62,6 +61,7 @@ func purgeDb(dbPath string) {
 	cry(err)
 }
 
+// Create a new Jira issue without any assignee
 func createIssue(client *jira.Client, project *jira.Project, summary string, description string, issueType string) *jira.Issue {
 	i := jira.Issue{
 		Fields: &jira.IssueFields{
@@ -80,6 +80,7 @@ func createIssue(client *jira.Client, project *jira.Project, summary string, des
 	return issue
 }
 
+// Read issues with no key from the sarso database and push to Jira
 func pushIssues(dbPath string, client *jira.Client, project *jira.Project) {
 	db, err := sql.Open("sqlite3", dbPath)
 	cry(err)
@@ -120,28 +121,37 @@ func pushIssues(dbPath string, client *jira.Client, project *jira.Project) {
 
 }
 
+// Save issues in the sarso database. Also save assigned users in the issues.
 func writeToDb(issues []jira.Issue, dbPath string) {
 	db, err := sql.Open("sqlite3", dbPath)
 	cry(err)
 
 	defer db.Close()
 
-	stmt, err := db.Prepare(`REPLACE INTO issues(
+	user_stmt, err := db.Prepare(`REPLACE INTO users(
+	    account_id,
+	    email,
+	    display_name
+	    ) VALUES(?, ?, ?)
+	`)
+	cry(err)
+
+	issue_stmt, err := db.Prepare(`REPLACE INTO issues(
         key,
         summary,
         description,
         type,
         status,
         resolution,
-        epic
-        ) VALUES(?, ?, ?, ?, ?, ?, ?)
+        epic,
+        assignee_id
+        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)
     `)
 	cry(err)
 
-	var statusString, resolutionString, epicKey *string
+	var statusString, resolutionString, epicKey, assignee_id *string
 
 	for _, issue := range issues {
-		// TODO: Make struct
 		if issue.Fields.Status == nil {
 			statusString = nil
 		} else {
@@ -160,7 +170,19 @@ func writeToDb(issues []jira.Issue, dbPath string) {
 			epicKey = &issue.Fields.Epic.Key
 		}
 
-		_, err = stmt.Exec(
+		if issue.Fields.Assignee == nil {
+			assignee_id = nil
+		} else {
+			assignee_id = &issue.Fields.Assignee.AccountID
+			_, err = user_stmt.Exec(
+				assignee_id,
+				issue.Fields.Assignee.DisplayName,
+				issue.Fields.Assignee.EmailAddress,
+			)
+			cry(err)
+		}
+
+		_, err = issue_stmt.Exec(
 			issue.Key,
 			issue.Fields.Summary,
 			issue.Fields.Description,
@@ -168,6 +190,7 @@ func writeToDb(issues []jira.Issue, dbPath string) {
 			statusString,
 			resolutionString,
 			epicKey,
+			assignee_id,
 		)
 		cry(err)
 	}
