@@ -57,6 +57,9 @@ func purgeDb(dbPath string) {
 
 	_, err = db.Exec(`DELETE FROM issues`)
 	cry(err)
+
+	_, err = db.Exec(`DELETE FROM users`)
+	cry(err)
 }
 
 func createIssue(client *jira.Client, project *jira.Project, summary string, description string, issueType string) *jira.Issue {
