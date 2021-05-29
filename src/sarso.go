@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/cheggaaa/pb/v3"
 	"github.com/docopt/docopt-go"
@@ -35,7 +36,7 @@ func initDb(dbPath string) {
         status TEXT,
         resolution TEXT,
         assignee_id TEXT,
-        due_date TEXT,
+        duedate TEXT,
         FOREIGN KEY(assignee_id) REFERENCES users(account_id)
     )`)
 	cry(err)
@@ -144,7 +145,7 @@ func writeToDb(issues []jira.Issue, dbPath string) {
         status,
         resolution,
         assignee_id,
-        due_date
+        duedate
         ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)
     `)
 	cry(err)
@@ -184,7 +185,7 @@ func writeToDb(issues []jira.Issue, dbPath string) {
 			statusString,
 			resolutionString,
 			assigneeId,
-			nil,
+			time.Time(issue.Fields.Duedate).Format(time.RFC3339),
 		)
 		cry(err)
 	}
