@@ -1,6 +1,6 @@
 #+TITLE: sarso
 
-[[tag][file:https://img.shields.io/github/v/tag/lepisma/sarso.svg]]
+[[tag][file:https://img.shields.io/github/v/tag/lepisma/sarso.svg?style=flat-square]] [[GitHub Workflow Status][file:https://img.shields.io/github/workflow/status/Vernacular-ai/eevee/CI?style=flat-square]]
 
 Sarso is not Jira.
 
