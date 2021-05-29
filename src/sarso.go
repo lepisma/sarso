@@ -34,8 +34,8 @@ func initDb(dbPath string) {
         type TEXT,
         status TEXT,
         resolution TEXT,
-        epic TEXT,
         assignee_id TEXT,
+        due_date TEXT,
         FOREIGN KEY(assignee_id) REFERENCES users(account_id)
     )`)
 	cry(err)
@@ -143,13 +143,13 @@ func writeToDb(issues []jira.Issue, dbPath string) {
         type,
         status,
         resolution,
-        epic,
-        assignee_id
+        assignee_id,
+        due_date
         ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)
     `)
 	cry(err)
 
-	var statusString, resolutionString, epicKey, assignee_id *string
+	var statusString, resolutionString, assignee_id *string
 
 	for _, issue := range issues {
 		if issue.Fields.Status == nil {
@@ -164,16 +164,10 @@ func writeToDb(issues []jira.Issue, dbPath string) {
 			resolutionString = &issue.Fields.Resolution.Name
 		}
 
-		if issue.Fields.Epic == nil {
-			epicKey = nil
-		} else {
-			epicKey = &issue.Fields.Epic.Key
-		}
-
 		if issue.Fields.Assignee == nil {
-			assignee_id = nil
+			assigneeId = nil
 		} else {
-			assignee_id = &issue.Fields.Assignee.AccountID
+			assigneeId = &issue.Fields.Assignee.AccountID
 			_, err = user_stmt.Exec(
 				assignee_id,
 				issue.Fields.Assignee.DisplayName,
@@ -189,8 +183,8 @@ func writeToDb(issues []jira.Issue, dbPath string) {
 			issue.Fields.Type.Name,
 			statusString,
 			resolutionString,
-			epicKey,
-			assignee_id,
+			assigneeId,
+			nil,
 		)
 		cry(err)
 	}
