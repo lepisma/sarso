@@ -149,7 +149,7 @@ func writeToDb(issues []jira.Issue, dbPath string) {
     `)
 	cry(err)
 
-	var statusString, resolutionString, assignee_id *string
+	var statusString, resolutionString, assigneeId *string
 
 	for _, issue := range issues {
 		if issue.Fields.Status == nil {
@@ -169,7 +169,7 @@ func writeToDb(issues []jira.Issue, dbPath string) {
 		} else {
 			assigneeId = &issue.Fields.Assignee.AccountID
 			_, err = user_stmt.Exec(
-				assignee_id,
+				assigneeId,
 				issue.Fields.Assignee.DisplayName,
 				issue.Fields.Assignee.EmailAddress,
 			)
