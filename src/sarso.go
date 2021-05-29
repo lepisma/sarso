@@ -196,8 +196,8 @@ func writeToDb(issues []jira.Issue, dbPath string) {
 	}
 }
 
-func countIssues(client *jira.Client, project *jira.Project) int {
-	_, resp, err := client.Issue.Search("project="+project.Key, &jira.SearchOptions{MaxResults: 0})
+func countIssues(client *jira.Client, jql string) int {
+	_, resp, err := client.Issue.Search(jql, &jira.SearchOptions{MaxResults: 0})
 	cry(err)
 
 	return resp.Total
@@ -256,7 +256,9 @@ Options:
 			return
 		}
 
-		totalIssues := countIssues(client, project)
+		jql := "project = " + project.Key + " AND resolution = Unresolved"
+
+		totalIssues := countIssues(client, jql)
 		fmt.Printf(":: Found total %d issues in project %s\n", totalIssues, project.Key)
 		bar := pb.StartNew(totalIssues)
 
@@ -267,7 +269,7 @@ Options:
 			return err
 		}
 
-		err = client.Issue.SearchPages("project="+project.Key, nil, appendFunc)
+		err = client.Issue.SearchPages(jql, nil, appendFunc)
 		cry(err)
 
 		bar.Finish()
