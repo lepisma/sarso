@@ -171,8 +171,8 @@ func writeToDb(issues []jira.Issue, dbPath string) {
 			assigneeId = &issue.Fields.Assignee.AccountID
 			_, err = user_stmt.Exec(
 				assigneeId,
-				issue.Fields.Assignee.DisplayName,
 				issue.Fields.Assignee.EmailAddress,
+				issue.Fields.Assignee.DisplayName,
 			)
 			cry(err)
 		}
