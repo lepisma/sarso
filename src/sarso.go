@@ -14,7 +14,7 @@ import (
 	jira "gopkg.in/andygrunwald/go-jira.v1"
 )
 
-const Version = "1.0.0"
+const Version = "1.1.0"
 
 func cry(err error) {
 	if err != nil {
