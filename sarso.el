@@ -145,9 +145,12 @@ https://company-name.atlassian.net")
                                    :due-date (sarso-parse-datetime (nth 4 line))))
             lines)))
 
-(cl-defmethod sarso-format-issue ((i sarso-issue))
-  "Format issue I for helm display and completion."
-  (format "%s: %s" (oref i :key) (oref i :summary)))
+(cl-defmethod sarso-self-issue-p ((i sarso-issue))
+  "Tell whether the issue is assigned to me."
+  (unless sarso-self-email
+    (error "`sarso-self-email' not set"))
+  (when (oref i :assignee)
+    (string-equal (oref (oref i :assignee) :email) sarso-self-email)))
 
 (cl-defmethod sarso-issue-link ((i sarso-issue))
   "Return Jira url for give issue I."
