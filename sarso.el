@@ -145,7 +145,7 @@ https://company-name.atlassian.net")
                                    :due-date (sarso-parse-datetime (nth 4 line))))
             lines)))
 
-(cl-defmethod sarso-self-issue-p ((i sarso-issue))
+(cl-defmethod sarso-issue-self-p ((i sarso-issue))
   "Tell whether the issue is assigned to me."
   (unless sarso-self-email
     (error "`sarso-self-email' not set"))
