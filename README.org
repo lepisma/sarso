@@ -21,7 +21,7 @@ The CLI can be built and installed using the following:
   sudo make install
 #+end_src
 
-The cli itself can be used standalone to sync tickets. For this you need to
+The CLI itself can be used standalone to sync tickets. For this you need to
 setup following environment variables:
 
 : export JIRA_BASE="https://company.atlassian.net"
@@ -29,7 +29,7 @@ setup following environment variables:
 : export JIRA_TOKEN="token/pass"
 
 Though the recommended way is to interact with the Emacs package that handles
-environment variables and other things on it's own. You can install the package
+environment variables and other things on its own. You can install the package
 using the usual methods. /It's not on melpa/.
 
 Here is an example config for the Emacs package.
