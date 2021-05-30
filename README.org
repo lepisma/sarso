@@ -14,24 +14,44 @@ There are two programs here:
 + A CLI executable, =sarso= for syncing issues to an sqlite database.
 + An Emacs package for working with the database.
 
-For syncing you need to setup few environment variables for Jira. Here is a
-slice from .envrc file.
+The CLI can be built and installed using the following:
+
+#+begin_src shell
+  make
+  sudo make install
+#+end_src
+
+The cli itself can be used standalone to sync tickets. For this you need to
+setup following environment variables:
 
 : export JIRA_BASE="https://company.atlassian.net"
 : export JIRA_USER="username"
 : export JIRA_TOKEN="token/pass"
 
+Though the recommended way is to interact with the Emacs package that handles
+environment variables and other things on it's own. You can install the package
+using the usual methods. /It's not on melpa/.
+
+Here is an example config for the Emacs package.
+#+begin_src emacs-lisp
+  (setq sarso-jira-root "https://vernacular-ai.atlassian.net"
+        sarso-jira-user "abhinav@vernacular.ai"
+        sarso-jira-token "<token>"
+        sarso-self-email "abhinav@vernacular.ai"
+        sarso-org-sink-file (concat user-notes-dir "tasks/sarso.org")
+        sarso-sync-projects '("RES" "CORE"))
+  (add-hook 'sarso-post-sync-hook #'sarso-self-issues-to-org)
+#+end_src
+
 ** Usage
-There are a few workflows that sarso is supposed to help in:
+*** Syncing tickets locally
+Call ~sarso-sync~. You can also set this on repeat by using something like this
+~(run-with-timer 60 (* 60 30) #'sarso-sync)~.
+
+*** Showing tickets in Org Agenda
+Use ~sarso-self-issues-to-org~. You can also set this in ~sarso-post-sync-hook~ so
+it runs automatically after each sync.
 
 *** Making new tickets from Emacs
 + ....
 
-*** Showing tickets in Org Agenda
-Right now the process is manual. Syncing and dumping to org will be automated in
-a future release.
-
-+ Set ~sarso-org-sink-file~ and ~sarso-self-email~.
-+ Sync the database using ~sarso sync --project-key=RES~. You can call it multiple
-  times for multiple projects.
-+ Call ~sarso-self-issues-to-org~.
