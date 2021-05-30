@@ -156,6 +156,19 @@ https://company-name.atlassian.net")
   "Return Jira url for give issue I."
   (concat (file-name-as-directory sarso-jira-root) "browse/" (oref i :key)))
 
+(cl-defmethod sarso-issue-org-format ((i sarso-issue))
+  "Format the issue as an org mode headline."
+  (with-temp-buffer
+    (org-mode)
+    (org-insert-heading)
+    (insert (oref i :summary))
+    (when (oref i :due-date)
+      (org-deadline nil (format-time-string "%F" (oref i :due-date))))
+    (org-set-property "JIRA-URL" (sarso-issue-link i))
+    (when (oref i :assignee)
+      (org-set-property "ASSIGNEE" (oref (oref i :assignee) :display-name)))
+    (buffer-substring-no-properties (point-min) (point-max))))
+
 (provide 'sarso)
 
 ;;; sarso.el ends here
