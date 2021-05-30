@@ -43,6 +43,34 @@
   "Root url for Jira. This looks something like this
 https://company-name.atlassian.net")
 
+(defcustom sarso-jira-user nil
+  "User name for Jira.")
+
+(defcustom sarso-jira-token nil
+  "Token / password for Jira.")
+
+(defcustom sarso-sync-projects nil
+  "List of projects to sync locally.")
+
+(defcustom sarso-self-email nil
+  "Email id of the account to have the default association.")
+
+(defvar sarso-command "sarso"
+  "Name of the command line variable.")
+
+(defvar sarso-post-sync-hook nil
+  "Hook called after a sync process is done.")
+
+(defclass sarso-user ()
+  ((account-id :initarg :account-id
+               :type string
+               :documentation "User Jira account id.")
+   (email :initarg :email
+          :type string)
+   (display-name :initarg :display-name
+                 :type string))
+  "A Jira User.")
+
 (defclass sarso-issue ()
   ((key :initarg :key
         :initform nil
@@ -57,7 +85,11 @@ https://company-name.atlassian.net")
                 :documentation "Detailed description")
    (type :initarg :type
          :type string
-         :documentation "Jira issue type."))
+         :documentation "Jira issue type.")
+   (assignee :initarg :assignee
+             :type (or null sarso-user))
+   (due-date :initarg :due-date
+             :initform nil))
   "An issue in sarso database.")
 
 (defun kebab-case-to-env-case (name)
