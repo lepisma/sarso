@@ -45,8 +45,7 @@ Here is an example config for the Emacs package.
 
 ** Usage
 *** Syncing tickets locally
-Call ~sarso-sync~. You can also set this on repeat by using something like this
-~(run-with-timer 60 (* 60 30) #'sarso-sync)~.
+Call ~sarso-sync~. Or set on repeat: ~(run-with-timer 60 (* 60 30) #'sarso-sync)~.
 
 *** Showing tickets in Org Agenda
 Use ~sarso-self-issues-to-org~. You can also set this in ~sarso-post-sync-hook~ so
