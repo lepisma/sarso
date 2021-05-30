@@ -58,6 +58,9 @@ https://company-name.atlassian.net")
 (defvar sarso-command "sarso"
   "Name of the command line variable.")
 
+(defvar sarso-sync-process nil
+  "Process variable for keeping sync process running.")
+
 (defvar sarso-post-sync-hook nil
   "Hook called after a sync process is done.")
 
