@@ -4,7 +4,7 @@
 
 ;; Author: Abhinav Tushar <abhinav@lepisma.xyz>
 ;; Version: 1.0.0
-;; Package-Requires: ((emacs "26") (helm "3.7.1") (s "1.12.0"))
+;; Package-Requires: ((emacs "26") (async "1.9.4") (helm "3.7.1") (s "1.12.0"))
 ;; URL: https://github.com/lepisma/sarso
 
 ;;; Commentary:
@@ -29,6 +29,7 @@
 
 ;;; Code:
 
+(require 'async)
 (require 'cl-lib)
 (require 'eieio)
 (require 'helm)
@@ -53,16 +54,13 @@ https://company-name.atlassian.net")
   "Token / password for Jira.")
 
 (defcustom sarso-sync-projects nil
-  "List of projects to sync locally.")
+  "List of project keys to sync locally.")
 
 (defcustom sarso-self-email nil
   "Email id of the account to have the default association.")
 
 (defvar sarso-command "sarso"
   "Name of the command line variable.")
-
-(defvar sarso-sync-process nil
-  "Process variable for keeping sync process running.")
 
 (defvar sarso-post-sync-hook nil
   "Hook called after a sync process is done.")
@@ -105,14 +103,26 @@ https://company-name.atlassian.net")
   "Evaluate BODY with environment variable set.
 
 \(fn ((VAR VAL) (VAR VAL)) BODY...)"
-  (let ((env-pairs (mapcar (lambda (var-val) (cons (kebab-case-to-env-case (symbol-name (car var-val))) (nth 1 var-val))) spec)))
-    `(let ((old-pairs (mapcar (lambda (pair) (cons (car pair) (getenv (car pair)))) ',env-pairs)))
-       (unwind-protect
-           (progn (dolist (pair ',env-pairs)
-                    (setenv (car pair) (cdr pair)))
-                  ,@body)
-         (dolist (pair old-pairs)
-           (setenv (car pair) (cdr pair)))))))
+  (declare (indent defun))
+  `(let* ((env-pairs (mapcar (lambda (var-val) (cons (kebab-case-to-env-case (symbol-name (car var-val))) (eval (nth 1 var-val)))) ',spec))
+          (old-pairs (mapcar (lambda (pair) (cons (car pair) (getenv (car pair)))) env-pairs)))
+     (unwind-protect
+         (progn (dolist (pair env-pairs)
+                  (setenv (car pair) (cdr pair)))
+                ,@body)
+       (dolist (pair old-pairs)
+         (setenv (car pair) (cdr pair))))))
+
+;;;###autoload
+(defun sarso-sync ()
+  "Run sarso sync."
+  (interactive)
+  (with-env ((jira-base sarso-jira-root)
+             (jira-user sarso-jira-user)
+             (jira-token sarso-jira-token))
+    (apply #'async-start-process "sarso" sarso-command
+             (lambda (proc) (run-hooks 'sarso-post-sync-hook))
+             "sync" sarso-sync-projects)))
 
 (defun sarso-db-exec (sql)
   "Execute sql and return results."
