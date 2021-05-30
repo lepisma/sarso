@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/cheggaaa/pb/v3"
@@ -199,22 +200,33 @@ func countIssues(client *jira.Client, jql string) int {
 	return resp.Total
 }
 
+func buildJql(projectKeys []string) string {
+	var projectTerms []string
+	for _, k := range projectKeys {
+		projectTerms = append(projectTerms, "project = "+k)
+	}
+
+	return "resolution = Unresolved AND (" + strings.Join(projectTerms, " OR ") + ")"
+}
+
 func main() {
 	usage := `sarso
 
 Usage:
-  sarso sync --project-key=<project-key> [--push-only] [--db-path=<db-path>]
+  sarso sync <project-keys>... [--push-only] [--db-path=<db-path>]
   sarso purge [--db-path=<db-path>]
   sarso -h | --help
   sarso --version
 
+Arguments:
+  <project-keys>                  Jira project keys.
+
 Options:
-  -h --help                     Show this screen.
-  --version                     Show version.
-  --db-path=<db-path>           Database file path [default: ~/.sarso.sqlite].
-  --project-key=<project-key>   Project key from Jira.
-  --push-only                   Only push tickets from sarso to Jira and
-                                not the other way.
+  -h --help                       Show this screen.
+  --version                       Show version.
+  --db-path=<db-path>             Database file path [default: ~/.sarso.sqlite].
+  --push-only                     Only push tickets from sarso to Jira and
+                                  not the other way.
 `
 
 	arguments, _ := docopt.ParseArgs(usage, os.Args[1:], Version)
@@ -229,8 +241,7 @@ Options:
 		purgeDb(dbPath)
 		fmt.Println(":: Database purged")
 	} else if syncArg, _ := arguments["sync"].(bool); syncArg {
-		//
-		projectKey, _ := arguments["--project-key"].(string)
+		projectKeys, _ := arguments["<project-keys>"].([]string)
 		pushOnly, _ := arguments["--push-only"].(bool)
 
 		base := os.Getenv("JIRA_BASE")
@@ -245,18 +256,14 @@ Options:
 		client, err := jira.NewClient(tp.Client(), base)
 		cry(err)
 
-		project, _, err := client.Project.Get(projectKey)
-		cry(err)
-
-		pushIssues(dbPath, client, project)
 		if pushOnly {
-			return
+			panic("Push only not implemented")
 		}
 
-		jql := "project = " + project.Key + " AND resolution = Unresolved"
+		jql := buildJql(projectKeys)
 
 		totalIssues := countIssues(client, jql)
-		fmt.Printf(":: Found total %d issues in project %s\n", totalIssues, project.Key)
+		fmt.Printf(":: Found total %d issues\n", totalIssues)
 		bar := pb.StartNew(totalIssues)
 
 		var issues []jira.Issue
