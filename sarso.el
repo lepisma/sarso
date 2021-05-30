@@ -62,6 +62,20 @@ https://company-name.atlassian.net")
 
 (defun kebab-case-to-env-case (name)
   (s-replace "-" "_" (upcase name)))
+
+(defmacro with-env (spec &rest body)
+  "Evaluate BODY with environment variable set.
+
+\(fn ((VAR VAL) (VAR VAL)) BODY...)"
+  (let ((env-pairs (mapcar (lambda (var-val) (cons (kebab-case-to-env-case (symbol-name (car var-val))) (nth 1 var-val))) spec)))
+    `(let ((old-pairs (mapcar (lambda (pair) (cons (car pair) (getenv (car pair)))) ',env-pairs)))
+       (unwind-protect
+           (progn (dolist (pair ',env-pairs)
+                    (setenv (car pair) (cdr pair)))
+                  ,@body)
+         (dolist (pair old-pairs)
+           (setenv (car pair) (cdr pair)))))))
+
 (defun sarso-db-exec (sql)
   "Execute sql and return results."
   (with-temp-buffer
