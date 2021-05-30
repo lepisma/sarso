@@ -127,10 +127,10 @@ https://company-name.atlassian.net")
             lines)))
 
 (defun sarso-parse-datetime (dt-string)
-  "Parse datetime from sarso db."
+  "Parse datetime from sarso db and return a Lisp timestamp."
   (let ((dt (iso8601-parse dt-string)))
     (unless (equal dt '(0 0 0 1 1 1 nil nil 0))
-      dt)))
+      (encode-time dt))))
 
 (defun sarso-read-issues ()
   "Return a list of sarso issues from database."
