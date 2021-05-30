@@ -123,6 +123,12 @@ https://company-name.atlassian.net")
                                   :display-name (nth 2 line)))
             lines)))
 
+(defun sarso-parse-datetime (dt-string)
+  "Parse datetime from sarso db."
+  (let ((dt (iso8601-parse dt-string)))
+    (unless (equal dt '(0 0 0 1 1 1 nil nil 0))
+      dt)))
+
 (defun sarso-read-issues ()
   "Return a list of sarso issues from database."
   ;; NOTE: We skip reading `description' as of now which means issues from here
@@ -133,7 +139,7 @@ https://company-name.atlassian.net")
                                    :summary (nth 1 line)
                                    :type (nth 2 line)
                                    :assignee (find (nth 3 line) users :key (lambda (o) (oref o :account-id)) :test 'equal)
-                                   :due-date (nth 4 line)))
+                                   :due-date (sarso-parse-datetime (nth 4 line))))
             lines)))
 
 (cl-defmethod sarso-format-issue ((i sarso-issue))
