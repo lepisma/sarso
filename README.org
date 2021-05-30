@@ -32,6 +32,6 @@ Right now the process is manual. Syncing and dumping to org will be automated in
 a future release.
 
 + Set ~sarso-org-sink-file~ and ~sarso-self-email~.
-+ Sync the database using ~sarso sync --project-key=RES~. You can all it multiple
++ Sync the database using ~sarso sync --project-key=RES~. You can call it multiple
   times for multiple projects.
 + Call ~sarso-self-issues-to-org~.
