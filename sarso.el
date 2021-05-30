@@ -39,6 +39,9 @@
 (defcustom sarso-db-path "~/.sarso.sqlite"
   "Path to sarso sqlite database.")
 
+(defcustom sarso-org-sink-file nil
+  "Path of the Org file to put self assigned items in.")
+
 (defcustom sarso-jira-root nil
   "Root url for Jira. This looks something like this
 https://company-name.atlassian.net")
@@ -169,6 +172,18 @@ https://company-name.atlassian.net")
     (when (oref i :assignee)
       (org-set-property "ASSIGNEE" (oref (oref i :assignee) :display-name)))
     (buffer-substring-no-properties (point-min) (point-max))))
+
+;;;###autoload
+(defun sarso-self-issues-to-org ()
+  "Save self assigned issues to org sink."
+  (unless sarso-org-sink-file
+    (error "`sarso-org-sink-file' not set."))
+  (let ((issues (cl-remove-if-not #'sarso-issue-self-p (sarso-read-issues))))
+    (with-current-buffer (find-file-noselect sarso-org-sink-file)
+      (erase-buffer)
+      (dolist (i issues)
+        (insert (sarso-issue-org-format i) "\n"))
+      (save-buffer))))
 
 (provide 'sarso)
 
