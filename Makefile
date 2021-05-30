@@ -9,3 +9,8 @@ install: ./build/sarso
 
 ./build/sarso: ./src/sarso.go
 	go build -o ./build/sarso ./src/sarso.go
+
+.PHONY: test
+test:
+	go test ./... -v
+	cask exec buttercup -L .

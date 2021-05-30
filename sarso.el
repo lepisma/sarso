@@ -4,7 +4,7 @@
 
 ;; Author: Abhinav Tushar <abhinav@lepisma.xyz>
 ;; Version: 0.4.0
-;; Package-Requires: ((emacs "26") (helm "3.6.2") (emacsql "3.0.0") (emacsql-sqlite "3.0.0"))
+;; Package-Requires: ((emacs "26") (helm "3.7.1") (s "1.12.0"))
 ;; URL: https://github.com/lepisma/sarso
 
 ;;; Commentary:
@@ -60,6 +60,8 @@ https://company-name.atlassian.net")
          :documentation "Jira issue type."))
   "An issue in sarso database.")
 
+(defun kebab-case-to-env-case (name)
+  (s-replace "-" "_" (upcase name)))
 (defun sarso-db-exec (sql)
   "Execute sql and return results."
   (with-temp-buffer
