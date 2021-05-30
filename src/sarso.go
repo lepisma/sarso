@@ -9,6 +9,7 @@ import (
 	"github.com/cheggaaa/pb/v3"
 	"github.com/docopt/docopt-go"
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/mitchellh/go-homedir"
 	jira "gopkg.in/andygrunwald/go-jira.v1"
 )
 
@@ -202,15 +203,15 @@ func main() {
 	usage := `sarso
 
 Usage:
-  sarso sync --db-path=<db-path> --project-key=<project-key> [--push-only]
-  sarso purge --db-path=<db-path>
+  sarso sync --project-key=<project-key> [--push-only] [--db-path=<db-path>]
+  sarso purge [--db-path=<db-path>]
   sarso -h | --help
   sarso --version
 
 Options:
   -h --help                     Show this screen.
   --version                     Show version.
-  --db-path=<db-path>           Database file path.
+  --db-path=<db-path>           Database file path [default: ~/.sarso.sqlite].
   --project-key=<project-key>   Project key from Jira.
   --push-only                   Only push tickets from sarso to Jira and
                                 not the other way.
@@ -218,6 +219,7 @@ Options:
 
 	arguments, _ := docopt.ParseArgs(usage, os.Args[1:], Version)
 	dbPath, _ := arguments["--db-path"].(string)
+	dbPath, _ = homedir.Expand(dbPath)
 
 	if _, err := os.Stat(dbPath); os.IsNotExist(err) {
 		initDb(dbPath)
