@@ -115,19 +115,26 @@ https://company-name.atlassian.net")
     (let ((sep "|"))
       (mapcar (lambda (line) (s-split sep line)) (s-split "\n" (s-trim (buffer-string)))))))
 
+(defun sarso-read-users ()
+  "Return a list of sarso users from database."
+  (let ((lines (sarso-db-exec "SELECT account_id, email, display_name FROM users")))
+    (mapcar (lambda (line) (sarso-user :account-id (nth 0 line)
+                                  :email (nth 1 line)
+                                  :display-name (nth 2 line)))
+            lines)))
+
 (defun sarso-read-issues ()
   "Return a list of sarso issues from database."
   ;; NOTE: We skip reading `description' as of now which means issues from here
   ;;       will have "" description.
-  (let ((lines (sarso-db-exec "SELECT key, summary, type FROM issues")))
+  (let ((users (sarso-read-users))
+        (lines (sarso-db-exec "SELECT key, summary, type, assignee_id, duedate FROM issues")))
     (mapcar (lambda (line) (sarso-issue :key (nth 0 line)
                                    :summary (nth 1 line)
-                                   :type (nth 2 line)))
+                                   :type (nth 2 line)
+                                   :assignee (find (nth 3 line) users :key (lambda (o) (oref o :account-id)) :test 'equal)
+                                   :due-date (nth 4 line)))
             lines)))
-
-(defun sarso-read-issue-types ()
-  "Return a list of possible task types"
-  (mapcar #'car (sarso-db-exec "SELECT DISTINCT type FROM issues")))
 
 (cl-defmethod sarso-format-issue ((i sarso-issue))
   "Format issue I for helm display and completion."
@@ -136,27 +143,6 @@ https://company-name.atlassian.net")
 (cl-defmethod sarso-issue-link ((i sarso-issue))
   "Return Jira url for give issue I."
   (concat (file-name-as-directory sarso-jira-root) "browse/" (oref i :key)))
-
-(cl-defmethod sarso-insert-issue-link ((i sarso-issue))
-  "Insert org mode style link for given issue I."
-  (org-insert-link nil (sarso-issue-link i) key))
-
-(defun sarso-new-issue (summary &optional type)
-  "Create and insert a new issue in the database."
-  (interactive (list (read-from-minibuffer "Summary: ") (completing-read "Issue Type: " (sarso-read-issue-types) nil t)))
-  (let* ((issue (sarso-issue :summary summary :type (or type "Task")))
-         (sql (format "INSERT INTO issues(summary, description, type) VALUES(\"%s\", \"\", \"%s\")" (oref issue :summary) (oref issue :type))))
-    (sarso-db-exec sql)))
-
-;;;###autoload
-(defun sarso-insert-link ()
-  "Prompt for summary search and insert links in org mode style."
-  (interactive)
-  (let ((issues (sarso-read-issues)))
-    (helm :sources (helm-build-sync-source "sarso issues"
-                     :candidates (mapcar (lambda (i) (cons (sarso-format-issue i) i)) issues)
-                     :action #'sarso-insert-issue-link)
-          :buffer "*helm sarso insert link*")))
 
 (provide 'sarso)
 
