@@ -91,6 +91,10 @@ https://company-name.atlassian.net")
    (type :initarg :type
          :type string
          :documentation "Jira issue type.")
+   (status :initarg :status
+           :type string)
+   (resolution :initarg :resolution
+               :type (or null string))
    (assignee :initarg :assignee
              :type (or null sarso-user))
    (due-date :initarg :due-date
@@ -130,7 +134,7 @@ https://company-name.atlassian.net")
   (with-temp-buffer
     (call-process "sqlite3" nil t nil (expand-file-name sarso-db-path) sql "-json")
     (goto-char (point-min))
-    (json-parse-buffer :object-type 'plist :array-type 'list)))
+    (json-parse-buffer :object-type 'plist :array-type 'list :null-object nil)))
 
 (defun sarso-read-users ()
   "Return a list of sarso users from database."
@@ -153,9 +157,11 @@ https://company-name.atlassian.net")
     (mapcar (lambda (rec) (sarso-issue :key (plist-get rec :key)
                                   :summary (plist-get rec :summary)
                                   :type (plist-get rec :type)
+                                  :status (plist-get rec :status)
+                                  :resolution (plist-get rec :resolution)
                                   :assignee (find (plist-get rec :assignee_id) users :key (lambda (o) (oref o :account-id)) :test 'equal)
                                   :due-date (sarso-parse-datetime (plist-get rec :duedate))))
-            (sarso-db-exec "SELECT key, summary, type, assignee_id, duedate FROM issues"))))
+            (sarso-db-exec "SELECT key, summary, type, status, resolution, assignee_id, duedate FROM issues"))))
 
 (cl-defmethod sarso-issue-self-p ((i sarso-issue))
   "Tell whether the issue is assigned to me."
@@ -163,6 +169,11 @@ https://company-name.atlassian.net")
     (error "`sarso-self-email' not set"))
   (when (oref i :assignee)
     (string-equal (oref (oref i :assignee) :email) sarso-self-email)))
+
+(cl-defmethod sarso-issue-resolved-p ((i sarso-issue))
+  "Tell if the issue is resolved."
+  (or (member (oref i :status) '("Done"))
+      (member (oref i :resolution) '("Done"))))
 
 (cl-defmethod sarso-issue-link ((i sarso-issue))
   "Return Jira url for give issue I."
