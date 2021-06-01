@@ -39,6 +39,7 @@ func initDb(dbPath string) {
         resolution TEXT,
         assignee_id TEXT,
         duedate TEXT,
+        fields TEXT,
         FOREIGN KEY(assignee_id) REFERENCES users(account_id)
     )`)
 	cry(err)
@@ -147,8 +148,9 @@ func writeToDb(issues []jira.Issue, dbPath string) {
         status,
         resolution,
         assignee_id,
-        duedate
-        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)
+        duedate,
+        fields
+        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
     `)
 	cry(err)
 
@@ -179,6 +181,9 @@ func writeToDb(issues []jira.Issue, dbPath string) {
 			cry(err)
 		}
 
+		fieldsBytes, err := issue.Fields.MarshalJSON()
+		cry(err)
+
 		_, err = issue_stmt.Exec(
 			issue.Key,
 			issue.Fields.Summary,
@@ -188,6 +193,7 @@ func writeToDb(issues []jira.Issue, dbPath string) {
 			resolutionString,
 			assigneeId,
 			time.Time(issue.Fields.Duedate).Format(time.RFC3339),
+			fieldsBytes,
 		)
 		cry(err)
 	}
