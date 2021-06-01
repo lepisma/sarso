@@ -198,7 +198,7 @@ https://company-name.atlassian.net")
   "Save self assigned issues to org sink."
   (unless sarso-org-sink-file
     (error "`sarso-org-sink-file' not set."))
-  (let ((issues (cl-remove-if-not #'sarso-issue-self-p (sarso-read-issues))))
+  (let ((issues (cl-remove-if-not (lambda (i) (and (sarso-issue-self-p i) (not (sarso-issue-resolved-p i)))) (sarso-read-issues))))
     (with-current-buffer (find-file-noselect sarso-org-sink-file)
       (erase-buffer)
       (dolist (i issues)
