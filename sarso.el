@@ -33,6 +33,7 @@
 (require 'cl-lib)
 (require 'eieio)
 (require 'helm)
+(require 'json)
 (require 'org)
 (require 's)
 (require 'seq)
@@ -127,17 +128,16 @@ https://company-name.atlassian.net")
 (defun sarso-db-exec (sql)
   "Execute sql and return results."
   (with-temp-buffer
-    (call-process "sqlite3" nil t nil (expand-file-name sarso-db-path) sql)
-    (let ((sep "|"))
-      (mapcar (lambda (line) (s-split sep line)) (s-split "\n" (s-trim (buffer-string)))))))
+    (call-process "sqlite3" nil t nil (expand-file-name sarso-db-path) sql "-json")
+    (goto-char (point-min))
+    (json-parse-buffer :object-type 'plist :array-type 'list)))
 
 (defun sarso-read-users ()
   "Return a list of sarso users from database."
-  (let ((lines (sarso-db-exec "SELECT account_id, email, display_name FROM users")))
-    (mapcar (lambda (line) (sarso-user :account-id (nth 0 line)
-                                  :email (nth 1 line)
-                                  :display-name (nth 2 line)))
-            lines)))
+  (mapcar (lambda (rec) (sarso-user :account-id (plist-get rec :account_id)
+                               :email (plist-get rec :email)
+                               :display-name (plist-get rec :display_name)))
+          (sarso-db-exec "SELECT account_id, email, display_name FROM users")))
 
 (defun sarso-parse-datetime (dt-string)
   "Parse datetime from sarso db and return a Lisp timestamp."
@@ -149,14 +149,13 @@ https://company-name.atlassian.net")
   "Return a list of sarso issues from database."
   ;; NOTE: We skip reading `description' as of now which means issues from here
   ;;       will have "" description.
-  (let ((users (sarso-read-users))
-        (lines (sarso-db-exec "SELECT key, summary, type, assignee_id, duedate FROM issues")))
-    (mapcar (lambda (line) (sarso-issue :key (nth 0 line)
-                                   :summary (nth 1 line)
-                                   :type (nth 2 line)
-                                   :assignee (find (nth 3 line) users :key (lambda (o) (oref o :account-id)) :test 'equal)
-                                   :due-date (sarso-parse-datetime (nth 4 line))))
-            lines)))
+  (let ((users (sarso-read-users)))
+    (mapcar (lambda (rec) (sarso-issue :key (plist-get rec :key)
+                                  :summary (plist-get rec :summary)
+                                  :type (plist-get rec :type)
+                                  :assignee (find (plist-get rec :assignee_id) users :key (lambda (o) (oref o :account-id)) :test 'equal)
+                                  :due-date (sarso-parse-datetime (plist-get rec :duedate))))
+            (sarso-db-exec "SELECT key, summary, type, assignee_id, duedate FROM issues"))))
 
 (cl-defmethod sarso-issue-self-p ((i sarso-issue))
   "Tell whether the issue is assigned to me."
