@@ -206,7 +206,7 @@ func buildJql(projectKeys []string) string {
 		projectTerms = append(projectTerms, "project = "+k)
 	}
 
-	return "resolution = Unresolved AND (" + strings.Join(projectTerms, " OR ") + ")"
+	return strings.Join(projectTerms, " OR ")
 }
 
 func main() {
