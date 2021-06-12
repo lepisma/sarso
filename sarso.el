@@ -60,6 +60,13 @@ https://company-name.atlassian.net")
 (defcustom sarso-self-email nil
   "Email id of the account to have the default association.")
 
+(defcustom sarso-jira-sprint-field-key "customfield_10010"
+  "Custom key for Sprint info in your Jira instance.
+
+See this
+https://community.developer.atlassian.com/t/confirm-variancy-of-jira-cloud-issue-field-keys-for-custom-fields/21134/2
+for additional details.")
+
 (defvar sarso-command "sarso"
   "Name of the command line variable.")
 
@@ -98,7 +105,9 @@ https://company-name.atlassian.net")
    (assignee :initarg :assignee
              :type (or null sarso-user))
    (due-date :initarg :due-date
-             :initform nil))
+             :initform nil)
+   (sprint :initarg :sprint
+           :initform nil))
   "An issue in sarso database.")
 
 (defun kebab-case-to-env-case (name)
@@ -149,6 +158,9 @@ https://company-name.atlassian.net")
     (unless (equal dt '(0 0 0 1 1 1 nil nil 0))
       (encode-time dt))))
 
+(defun sarso-parse-sprint (fields-string)
+  (gethash sarso-jira-sprint-field-key (json-parse-string fields-string :array-type 'list :null-object nil)))
+
 (defun sarso-read-issues ()
   "Return a list of sarso issues from database."
   ;; NOTE: We skip reading `description' as of now which means issues from here
@@ -160,8 +172,9 @@ https://company-name.atlassian.net")
                                   :status (plist-get rec :status)
                                   :resolution (plist-get rec :resolution)
                                   :assignee (find (plist-get rec :assignee_id) users :key (lambda (o) (oref o :account-id)) :test 'equal)
-                                  :due-date (sarso-parse-datetime (plist-get rec :duedate))))
-            (sarso-db-exec "SELECT key, summary, type, status, resolution, assignee_id, duedate FROM issues"))))
+                                  :due-date (sarso-parse-datetime (plist-get rec :duedate))
+                                  :sprint (sarso-parse-sprint (plist-get rec :fields))))
+            (sarso-db-exec "SELECT key, summary, type, status, resolution, assignee_id, duedate, fields FROM issues"))))
 
 (cl-defmethod sarso-issue-self-p ((i sarso-issue))
   "Tell whether the issue is assigned to me."
@@ -174,6 +187,13 @@ https://company-name.atlassian.net")
   "Tell if the issue is resolved."
   (or (member (oref i :status) '("Done"))
       (member (oref i :resolution) '("Done"))))
+
+(cl-defmethod sarso-issue-active-p ((i sarso-issue))
+  "Tell if the issue is in current sprint. If no sprint info is
+present, assume the issue is active."
+  (if (null (oref i :sprint))
+      t
+    (member "active" (mapcar (lambda (h) (gethash "state" h)) (oref i :sprint)))))
 
 (cl-defmethod sarso-issue-link ((i sarso-issue))
   "Return Jira url for give issue I."
@@ -198,7 +218,7 @@ https://company-name.atlassian.net")
   "Save self assigned issues to org sink."
   (unless sarso-org-sink-file
     (error "`sarso-org-sink-file' not set."))
-  (let ((issues (cl-remove-if-not (lambda (i) (and (sarso-issue-self-p i) (not (sarso-issue-resolved-p i)))) (sarso-read-issues))))
+  (let ((issues (cl-remove-if-not (lambda (i) (and (sarso-issue-self-p i) (not (sarso-issue-resolved-p i)) (sarso-issue-active-p i))) (sarso-read-issues))))
     (with-current-buffer (find-file-noselect sarso-org-sink-file)
       (erase-buffer)
       (dolist (i issues)
