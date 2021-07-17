@@ -41,8 +41,10 @@
 (defcustom sarso-db-path "~/.sarso.sqlite"
   "Path to sarso sqlite database.")
 
-(defcustom sarso-org-sink-file nil
-  "Path of the Org file to put self assigned items in.")
+(defcustom sarso-org-sink-files nil
+  "Path of the Org files to put self assigned items in. This is
+an alist mapping sink file to list of project keys."
+  :type '(alist :key-type (file :must-match t)))
 
 (defcustom sarso-jira-root nil
   "Root url for Jira. This looks something like this
@@ -183,6 +185,10 @@ for additional details.")
   (when (oref i :assignee)
     (string-equal (oref (oref i :assignee) :email) sarso-self-email)))
 
+(cl-defmethod sarso-issue-project-id ((i sarso-issue))
+  "Return project id for the issue."
+  (car (s-split "-" (oref i :key))))
+
 (cl-defmethod sarso-issue-resolved-p ((i sarso-issue))
   "Tell if the issue is resolved."
   (or (member (oref i :status) '("Done"))
@@ -213,17 +219,35 @@ present, assume the issue is active."
       (org-set-property "ASSIGNEE" (oref (oref i :assignee) :display-name)))
     (buffer-substring-no-properties (point-min) (point-max))))
 
-;;;###autoload
-(defun sarso-self-issues-to-org ()
-  "Save self assigned issues to org sink."
-  (unless sarso-org-sink-file
-    (error "`sarso-org-sink-file' not set."))
-  (let ((issues (cl-remove-if-not (lambda (i) (and (sarso-issue-self-p i) (not (sarso-issue-resolved-p i)) (sarso-issue-active-p i))) (sarso-read-issues))))
-    (with-current-buffer (find-file-noselect sarso-org-sink-file)
-      (erase-buffer)
+(defun sarso-issues--clear-file (org-file)
+  "Clear sarso issues from current Org buffer."
+  (save-excursion
+    (with-current-buffer (find-file-noselect org-file)
+      (goto-char (point-min))
+      ;; TODO Might need to strengthen this check
+      (while (re-search-forward ":JIRA-URL: " nil t)
+        (org-cut-subtree))
+      (save-buffer))))
+
+(defun sarso-issues--add-in-file (issues org-file)
+  "Add issues in the given org file."
+  (save-excursion
+    (with-current-buffer (find-file-noselect org-file)
+      (goto-char (point-max))
       (dolist (i issues)
         (insert (sarso-issue-org-format i) "\n"))
       (save-buffer))))
+
+;;;###autoload
+(defun sarso-self-issues-to-org ()
+  "Save self assigned issues to org sink."
+  (unless sarso-org-sink-files
+    (error "`sarso-org-sink-files' not set."))
+  (let ((issues (cl-remove-if-not (lambda (i) (and (sarso-issue-self-p i) (not (sarso-issue-resolved-p i)) (sarso-issue-active-p i))) (sarso-read-issues))))
+    (dolist (sink-spec sarso-org-sink-files)
+      (let ((sink-issues (cl-remove-if-not (lambda (i) (member (sarso-issue-project-id i) (cdr sink-spec))) issues)))
+        (sarso-issues--clear-file (car sink-spec))
+        (sarso-issues--add-in-file sink-issues (car sink-spec))))))
 
 (provide 'sarso)
 
