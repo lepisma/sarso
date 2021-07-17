@@ -38,8 +38,9 @@ Here is an example config for the Emacs package.
         sarso-jira-user "abhinav@vernacular.ai"
         sarso-jira-token "<token>"
         sarso-self-email "abhinav@vernacular.ai"
-        sarso-org-sink-file (concat user-notes-dir "tasks/sarso.org")
-        sarso-sync-projects '("RES" "CORE"))
+        sarso-org-sink-files `((,(concat user-notes-dir "tasks/research.org") . ("RES"))
+                               (,(concat user-notes-dir "tasks/ml-product.org") . ("PROD" "CORE")))
+        sarso-sync-projects '("RES" "CORE" "PROD"))
   (add-hook 'sarso-post-sync-hook #'sarso-self-issues-to-org)
 #+end_src
 
@@ -50,7 +51,3 @@ Call ~sarso-sync~. Or set on repeat: ~(run-with-timer 60 (* 60 30) #'sarso-sync)
 *** Showing tickets in Org Agenda
 Use ~sarso-self-issues-to-org~. You can also set this in ~sarso-post-sync-hook~ so
 it runs automatically after each sync.
-
-*** Making new tickets from Emacs
-+ ....
-
