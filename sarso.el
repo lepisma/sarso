@@ -219,6 +219,16 @@ present, assume the issue is active."
       (org-set-property "ASSIGNEE" (oref (oref i :assignee) :display-name)))
     (buffer-substring-no-properties (point-min) (point-max))))
 
+(defun org-delete-subtree ()
+  "Similar to org-cut-subtree but doesn't save items in kill
+ring.
+
+HACK: We are adopting a post-processing approach here instead of
+      low level range deletion."
+  (org-cut-subtree)
+  (pop kill-ring)
+  (setq kill-ring-yank-pointer kill-ring))
+
 (defun sarso-issues--clear-file (org-file)
   "Clear sarso issues from current Org buffer."
   (save-excursion
@@ -226,7 +236,7 @@ present, assume the issue is active."
       (goto-char (point-min))
       ;; TODO Might need to strengthen this check
       (while (re-search-forward ":JIRA-URL: " nil t)
-        (org-cut-subtree))
+        (org-delete-subtree))
       (save-buffer))))
 
 (defun sarso-issues--add-in-file (issues org-file)
