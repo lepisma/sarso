@@ -3,7 +3,7 @@
 ;; Copyright (c) 2020 Abhinav Tushar
 
 ;; Author: Abhinav Tushar <abhinav@lepisma.xyz>
-;; Version: 1.4.0
+;; Version: 1.4.1
 ;; Package-Requires: ((emacs "26") (async "1.9.4") (helm "3.7.1") (s "1.12.0"))
 ;; URL: https://github.com/lepisma/sarso
 
