@@ -209,7 +209,7 @@ func countIssues(client *jira.Client, jql string) int {
 func buildJql(projectKeys []string) string {
 	var projectTerms []string
 	for _, k := range projectKeys {
-		projectTerms = append(projectTerms, "project = "+k)
+		projectTerms = append(projectTerms, "project = \""+k+"\"")
 	}
 
 	return strings.Join(projectTerms, " OR ")
