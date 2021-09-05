@@ -69,6 +69,13 @@ See this
 https://community.developer.atlassian.com/t/confirm-variancy-of-jira-cloud-issue-field-keys-for-custom-fields/21134/2
 for additional details.")
 
+(defcustom sarso-jira-todo-statuses nil
+  "List of Jira status to map to TODO in Org.
+
+We assume that `org-todo-keywords' are following the default
+workflow of TODO and DONE. This will change in a future
+version.")
+
 (defvar sarso-command "sarso"
   "Name of the command line variable.")
 
@@ -217,6 +224,8 @@ present, assume the issue is active."
     (org-set-property "JIRA-URL" (sarso-issue-link i))
     (when (oref i :assignee)
       (org-set-property "ASSIGNEE" (oref (oref i :assignee) :display-name)))
+    (when (member (oref i :status) sarso-jira-todo-statuses)
+      (org-todo "TODO"))
     (buffer-substring-no-properties (point-min) (point-max))))
 
 (defun org-delete-subtree ()
