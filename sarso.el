@@ -218,6 +218,7 @@ present, assume the issue is active."
     (org-mode)
     (org-insert-heading)
     (insert (oref i :summary))
+    (org-set-tags '("sarso"))
     (if (oref i :due-date)
         (org-deadline nil (format-time-string "%F" (oref i :due-date)))
       (org-schedule nil (format-time-string "%F")))
